@@ -277,10 +277,8 @@ export default function Page() {
                       </button>
                       
                       {isThinkingExpanded && (
-                        <div className="border-l-[3px] border-gray-200 ml-1 pl-3 py-0.5 mt-0.5 leading-relaxed max-vh-40 overflow-y-auto w-full break-words prose prose-sm prose-gray max-w-none text-gray-600 font-medium marker:text-gray-500">
-                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                              {msg.reasoning || ''}
-                           </ReactMarkdown>
+                        <div className="border-l-[3px] border-gray-200 ml-1 pl-3 py-0.5 mt-0.5 leading-relaxed max-vh-40 overflow-y-auto w-full break-words text-[13.5px] text-gray-500 font-medium whitespace-pre-wrap">
+                            {msg.reasoning || ''}
                         </div>
                       )}
                     </div>
@@ -308,10 +306,8 @@ export default function Page() {
                   </div>
                   
                   {streamReasoning && (
-                    <div className="border-l-[3px] border-gray-200 ml-1 pl-3 py-0.5 mt-0.5 leading-relaxed w-full break-words prose prose-sm prose-gray max-w-none text-gray-600 font-medium marker:text-gray-500">
-                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {streamReasoning || ''}
-                       </ReactMarkdown>
+                    <div className="border-l-[3px] border-gray-200 ml-1 pl-3 py-0.5 mt-0.5 leading-relaxed w-full break-words text-[13.5px] text-gray-500 font-medium whitespace-pre-wrap">
+                        {streamReasoning || ''}
                     </div>
                   )}
                 </div>

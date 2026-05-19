@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'node:crypto';
 import { pool, syncDb } from '@/lib/db';
-import axios from 'axios';
 
 const BASE = 'https://notegpt.io';
 
@@ -91,11 +90,8 @@ export async function POST(req: NextRequest) {
     };
 
     const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
 
-    let answer = '';
-    let reasoning = '';
-
+    // Removed Accept-Encoding so fetch handles decompression automatically
     const res = await fetch(`${BASE}/api/v2/chat/stream`, {
       method: "POST",
       headers: {
@@ -110,8 +106,6 @@ export async function POST(req: NextRequest) {
         "sec-fetch-mode": "cors",
         "sec-fetch-dest": "empty",
         Referer: `${BASE}/chat-deepseek`,
-        "Accept-Encoding": "gzip, deflate, br, zstd",
-        "Accept-Language": "id-ID,id;q=0.9",
         Cookie: cookieHeader,
         priority: "u=1, i",
       },
@@ -127,63 +121,74 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No response body from notegpt" }, { status: 500 });
     }
 
-    let stringBuffer = '';
+    const externalReader = res.body.getReader();
 
-    const transformStream = new TransformStream({
-      start(controller) {
-         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ chatId: finalChatId })}\n\n`));
-      },
-      transform(chunk, controller) {
-        const text = decoder.decode(chunk, { stream: true });
-        stringBuffer += text;
-        
-        // Accumulate for DB
-        const lines = stringBuffer.split(/\r?\n/);
-        stringBuffer = lines.pop() || ''; // Keep incomplete line in buffer
+    const stream = new ReadableStream({
+      async start(controller) {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ chatId: finalChatId })}\n\n`));
 
-        for (const line of lines) {
-          const clean = line.trim();
-          if (clean.startsWith('data:')) {
-            const raw = clean.replace(/^data:\s*/, '').trim();
-            if (raw === '[DONE]') continue;
-            try {
-              const json = JSON.parse(raw);
-              if (json.reasoning) reasoning += json.reasoning;
-              if (json.text) answer += json.text;
-            } catch (e) {}
+        const decoder = new TextDecoder();
+        let answer = '';
+        let reasoning = '';
+        let stringBuffer = '';
+
+        try {
+          while (true) {
+            const { value, done } = await externalReader.read();
+            if (done) break;
+
+            const text = decoder.decode(value, { stream: true });
+            controller.enqueue(encoder.encode(text)); // send raw text chunk to frontend instantly
+
+            stringBuffer += text;
+            const lines = stringBuffer.split(/\r?\n/);
+            stringBuffer = lines.pop() || '';
+
+            for (const line of lines) {
+              const clean = line.trim();
+              if (clean.startsWith('data:')) {
+                const raw = clean.replace(/^data:\s*/, '').trim();
+                if (raw === '[DONE]') continue;
+                try {
+                  const json = JSON.parse(raw);
+                  if (json.reasoning) reasoning += json.reasoning;
+                  if (json.text) answer += json.text;
+                } catch (e) {}
+              }
+            }
           }
-        }
-        
-        // Pass through unmodified chunk to the client
-        controller.enqueue(chunk);
-      },
-      flush(controller) {
-        // Process any remaining text in buffer (though usually empty stream ends with DONE)
-        if (stringBuffer) {
-           const clean = stringBuffer.trim();
-           if (clean.startsWith('data:')) {
-             const raw = clean.replace(/^data:\s*/, '').trim();
-             if (raw !== '[DONE]') {
-                 try {
-                   const json = JSON.parse(raw);
-                   if (json.reasoning) reasoning += json.reasoning;
-                   if (json.text) answer += json.text;
-                 } catch (e) {}
+
+          if (stringBuffer) {
+             const clean = stringBuffer.trim();
+             if (clean.startsWith('data:')) {
+               const raw = clean.replace(/^data:\s*/, '').trim();
+               if (raw !== '[DONE]') {
+                   try {
+                     const json = JSON.parse(raw);
+                     if (json.reasoning) reasoning += json.reasoning;
+                     if (json.text) answer += json.text;
+                   } catch(e) {}
+               }
              }
-           }
-        }
-        
-        if (answer || reasoning) {
-          const assistantMessageId = uuid();
-          pool.execute(
-            'INSERT INTO messages (id, chat_id, role, content, reasoning) VALUES (?, ?, ?, ?, ?)',
-            [assistantMessageId, finalChatId, 'assistant', answer, reasoning]
-          ).catch((err) => console.error("Final insert error:", err));
+          }
+
+          if (answer || reasoning) {
+            const assistantMessageId = uuid();
+            await pool.execute(
+              'INSERT INTO messages (id, chat_id, role, content, reasoning) VALUES (?, ?, ?, ?, ?)',
+              [assistantMessageId, finalChatId, 'assistant', answer, reasoning]
+            ).catch((err) => console.error("Final insert error:", err));
+          }
+
+          controller.close();
+        } catch (err) {
+          console.error("Stream bridging error:", err);
+          controller.error(err);
         }
       }
     });
 
-    return new Response(res.body.pipeThrough(transformStream), {
+    return new Response(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
