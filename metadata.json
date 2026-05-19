@@ -1,0 +1,8 @@
+{
+  "name": "Chat AI Mobile",
+  "description": "Aplikasi Chat AI mobile-first dengan tampilan clone presisi",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

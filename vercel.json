@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "next build",
+  "outputDirectory": ".next",
+  "installCommand": "npm install",
+  "devCommand": "next dev --port 3000",
+  "regions": ["sin1"],
+  "functions": {
+    "app/api/**/route.ts": {
+      "memory": 1024,
+      "maxDuration": 60,
+      "runtime": "nodejs22.x"
+    }
+  }
+}
