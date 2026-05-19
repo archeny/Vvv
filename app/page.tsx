@@ -237,11 +237,10 @@ export default function Page() {
           <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2 text-gray-700 active:bg-gray-100 transition-colors rounded-full">
              <Menu size={24} strokeWidth={1.5} />
           </button>
-          <div className="flex flex-col items-center justify-center -mt-1">
-            <h1 className="text-[15px] font-semibold text-gray-900 tracking-tight">Sapaan ramah dan tawaran bantuan</h1>
-            <div className="flex items-center gap-1 text-[11px] text-blue-600 font-bold tracking-widest uppercase mt-0.5">
-              <Sparkles size={11} className="fill-blue-600/50" />
-              PAKAR
+          <div className="flex flex-col items-center justify-center -mt-1 cursor-pointer">
+            <div className="flex items-center gap-1.5 text-[15px] font-bold text-gray-950 tracking-tight">
+              DeepSeek V4 Flash
+              <ChevronDown size={14} className="text-gray-500" strokeWidth={2.5} />
             </div>
           </div>
           <button onClick={startNewChat} className="p-2 -mr-2 text-gray-700 active:bg-gray-100 transition-colors rounded-full">
@@ -249,36 +248,36 @@ export default function Page() {
           </button>
         </header>
 
-        <main className="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-6 scroll-smooth">
+        <main className="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-5 scroll-smooth">
           
           {messages.length === 0 && !isGenerating && !streamReasoning && !streamAnswer && (
              <div className="flex-1 flex flex-col items-center justify-center text-center px-4 opacity-70">
                 <Sparkles size={40} className="text-gray-300 mb-4" />
-                <h2 className="text-xl font-medium text-gray-600">Apa yang bisa saya bantu?</h2>
-                <p className="text-sm text-gray-400 mt-2">Diberdayakan oleh DeepSeek V4 Flash</p>
+                <h2 className="text-lg font-bold text-gray-700">Apa yang bisa saya bantu?</h2>
+                <p className="text-[13px] text-gray-500 mt-2 font-medium">Model: DeepSeek V4 Flash</p>
              </div>
           )}
 
           {messages.map((msg, idx) => (
             <div key={idx} className={`flex flex-col max-w-full ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
               {msg.role === 'user' ? (
-                <div className="bg-[#f2f2f5] rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[4px] px-5 py-3 text-[15px] text-gray-800 leading-relaxed max-w-[85%] break-words">
+                <div className="bg-[#f0f0f4] rounded-tl-[20px] rounded-bl-[20px] rounded-br-[20px] rounded-tr-[4px] px-4 py-2.5 text-[14px] text-gray-950 font-medium leading-relaxed max-w-[85%] break-words shadow-sm border border-gray-100/50">
                   {msg.content}
                 </div>
               ) : (
-                <div className="flex flex-col gap-3 max-w-full w-full">
+                <div className="flex flex-col gap-1 max-w-full w-full">
                   {msg.reasoning && (
                     <div className="flex flex-col">
                       <button 
                         onClick={() => setIsThinkingExpanded(!isThinkingExpanded)}
-                        className="flex items-center gap-2 text-[13px] text-gray-500 font-medium py-1.5 self-start rounded-lg hover:text-gray-700 transition-colors"
+                        className="flex items-center gap-2 text-[12px] text-gray-500 font-bold py-1 self-start rounded-lg hover:text-gray-800 transition-colors"
                       >
                         Tahap Berpikir Selesai
-                        {isThinkingExpanded ? <ChevronUp size={16} strokeWidth={2} /> : <ChevronDown size={16} strokeWidth={2} />}
+                        {isThinkingExpanded ? <ChevronUp size={14} strokeWidth={2.5} /> : <ChevronDown size={14} strokeWidth={2.5} />}
                       </button>
                       
                       {isThinkingExpanded && (
-                        <div className="border-l-[3px] border-gray-200 ml-1.5 pl-4 py-1 mt-1 leading-relaxed max-vh-40 overflow-y-auto w-full break-words prose prose-sm prose-gray max-w-none text-gray-500 marker:text-gray-400">
+                        <div className="border-l-[3px] border-gray-200 ml-1 pl-3 py-0.5 mt-0.5 leading-relaxed max-vh-40 overflow-y-auto w-full break-words prose prose-sm prose-gray max-w-none text-gray-600 font-medium marker:text-gray-500">
                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
                               {msg.reasoning || ''}
                            </ReactMarkdown>
@@ -287,7 +286,7 @@ export default function Page() {
                     </div>
                   )}
 
-                  <div className="text-[15px] leading-relaxed text-gray-800 pt-2 break-words prose prose-p:leading-relaxed prose-gray max-w-none prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-table:border-collapse prose-th:border prose-th:border-gray-300 prose-th:p-2 prose-td:border prose-td:border-gray-300 prose-td:p-2">
+                  <div className="text-[14px] font-medium leading-relaxed text-gray-950 pt-1 break-words prose prose-sm prose-p:leading-relaxed prose-gray max-w-none prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-table:border-collapse prose-th:border prose-th:border-gray-300 prose-th:p-2 prose-td:border prose-td:border-gray-300 prose-td:p-2">
                     <div>
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                        {msg.content || ''}
@@ -301,15 +300,15 @@ export default function Page() {
 
           {/* STREAMING UI */}
           {(streamReasoning || streamAnswer || (isGenerating && !streamReasoning && !streamAnswer)) && (
-            <div className="flex flex-col gap-3 max-w-full items-start w-full">
+            <div className="flex flex-col gap-1 max-w-full items-start w-full">
               {(!streamAnswer || streamReasoning) && (
                 <div className="flex flex-col w-full">
-                  <div className="flex items-center gap-2 text-[13px] text-gray-500 font-medium py-1.5 self-start rounded-lg">
-                    <Loader2 size={14} className="animate-spin text-blue-500" /> Sedang berpikir...
+                  <div className="flex items-center gap-1.5 text-[12px] text-gray-600 font-bold py-1 self-start rounded-lg">
+                    <Loader2 size={12} className="animate-spin text-blue-600" /> Sedang berpikir...
                   </div>
                   
                   {streamReasoning && (
-                    <div className="border-l-[3px] border-gray-200 ml-1.5 pl-4 py-1 mt-1 leading-relaxed w-full break-words prose prose-sm prose-gray max-w-none text-gray-500 marker:text-gray-400">
+                    <div className="border-l-[3px] border-gray-200 ml-1 pl-3 py-0.5 mt-0.5 leading-relaxed w-full break-words prose prose-sm prose-gray max-w-none text-gray-600 font-medium marker:text-gray-500">
                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {streamReasoning || ''}
                        </ReactMarkdown>
@@ -318,7 +317,7 @@ export default function Page() {
                 </div>
               )}
               {streamAnswer && (
-                 <div className="text-[15px] leading-relaxed text-gray-800 pt-2 break-words prose prose-p:leading-relaxed prose-gray max-w-none prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-table:border-collapse prose-th:border prose-th:border-gray-300 prose-th:p-2 prose-td:border prose-td:border-gray-300 prose-td:p-2">
+                 <div className="text-[14px] font-medium leading-relaxed text-gray-950 pt-1 break-words prose prose-sm prose-p:leading-relaxed prose-gray max-w-none prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-table:border-collapse prose-th:border prose-th:border-gray-300 prose-th:p-2 prose-td:border prose-td:border-gray-300 prose-td:p-2">
                     <div>
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                        {streamAnswer || ''}
@@ -332,8 +331,8 @@ export default function Page() {
           <div ref={messagesEndRef} className="h-4" />
         </main>
 
-        <div className="px-4 pb-5 pt-2 bg-gradient-to-t from-white via-white to-transparent sticky bottom-0">
-          <div className="border border-gray-200/80 rounded-[32px] p-2 flex flex-col gap-2.5 shadow-[0_2px_10px_rgba(0,0,0,0.04)] bg-[#fdfdfd] focus-within:border-blue-400 focus-within:shadow-[0_2px_12px_rgba(59,130,246,0.1)] transition-all">
+        <div className="px-3 pb-4 pt-1 bg-gradient-to-t from-white via-white to-transparent sticky bottom-0">
+          <div className="border border-gray-300/80 rounded-[28px] p-1.5 flex flex-col gap-2 shadow-[0_2px_10px_rgba(0,0,0,0.06)] bg-white focus-within:border-blue-500 focus-within:shadow-[0_2px_12px_rgba(59,130,246,0.15)] transition-all">
             <input 
               type="text" 
               value={input}
@@ -342,24 +341,24 @@ export default function Page() {
                 if (e.key === 'Enter') handleSend();
               }}
               disabled={isGenerating}
-              placeholder="Ketik pesan atau tanya sesuatu..." 
-              className="bg-transparent border-none outline-none text-[15px] px-3 pt-2 placeholder-gray-400 w-full disabled:opacity-50"
+              placeholder="Tanya sesuatu..." 
+              className="bg-transparent border-none outline-none text-[14px] font-medium px-3 pt-1.5 placeholder-gray-500 w-full disabled:opacity-50 text-gray-950"
             />
             <div className="flex items-center justify-between px-1">
-              <div className="flex items-center gap-2">
-                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[#f0f4ff] text-[#2563eb] rounded-full text-[13px] font-medium border border-[#dbeafe] transition-colors">
-                  <Sparkles size={14} className="fill-[#3b82f6]/20" /> Berpikir
+              <div className="flex items-center gap-1.5">
+                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[#f0f4ff] text-[#2563eb] rounded-full text-[12px] font-bold border border-[#dbeafe] transition-colors">
+                  <Sparkles size={12} className="fill-[#3b82f6]/20" /> Berpikir
                 </button>
-                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[#f5f8ff] text-[#3b82f6] rounded-full text-[13px] font-medium border border-[#e0e7ff] transition-colors hover:bg-[#ebf0fc]">
-                  <Globe size={14} /> Cari
+                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[#f5f8ff] text-[#3b82f6] rounded-full text-[12px] font-bold border border-[#e0e7ff] transition-colors hover:bg-[#ebf0fc]">
+                  <Globe size={12} /> Cari
                 </button>
               </div>
               <button 
                 onClick={handleSend}
                 disabled={!input.trim() || isGenerating}
-                className="p-2 text-white bg-blue-600 rounded-full mr-0.5 hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:bg-gray-300 disabled:text-white"
+                className="p-1.5 text-white bg-blue-600 rounded-full hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:bg-gray-400 disabled:text-white"
               >
-                {isGenerating ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} className="ml-0.5" />}
+                {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} className="ml-0.5" />}
               </button>
             </div>
           </div>

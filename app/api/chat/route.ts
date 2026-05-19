@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
       language: "auto",
       model: "deepseek-v4-flash",
       tone: "default",
-      length: "moderate",
+      length: "long",
       conversation_id: conversationId,
       image_urls: [],
       history_messages: formattedHistory,
