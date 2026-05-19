@@ -20,7 +20,11 @@ export default function Page() {
   // To track the current streaming reasoning & answer
   const [streamReasoning, setStreamReasoning] = useState('');
   const [streamAnswer, setStreamAnswer] = useState('');
-  const [isThinkingExpanded, setIsThinkingExpanded] = useState(true);
+  const [collapsedThinking, setCollapsedThinking] = useState<Record<number, boolean>>({});
+
+  const toggleThinking = (idx: number) => {
+    setCollapsedThinking(prev => ({ ...prev, [idx]: !prev[idx] }));
+  };
 
   useEffect(() => {
     let id = localStorage.getItem('device_id');
@@ -85,7 +89,6 @@ export default function Page() {
     setIsGenerating(true);
     setStreamReasoning('');
     setStreamAnswer('');
-    setIsThinkingExpanded(true);
 
     // Save history formatting
     const newMessages = [...messages, { role: 'user', content: userText }];
@@ -193,35 +196,35 @@ export default function Page() {
             <motion.div 
               initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="absolute top-0 left-0 h-full w-4/5 max-w-[300px] bg-white z-50 shadow-2xl flex flex-col"
+              className="absolute top-0 left-0 h-full w-[70%] max-w-[260px] bg-white z-50 shadow-2xl flex flex-col"
             >
-              <div className="p-4 flex items-center justify-between border-b border-gray-100">
-                <span className="font-semibold text-lg">Riwayat Obrolan</span>
-                <button onClick={() => setSidebarOpen(false)} className="p-2 -mr-2 text-gray-500 active:bg-gray-100 rounded-full">
-                  <X size={20} />
+              <div className="p-3.5 flex items-center justify-between border-b border-gray-100">
+                <span className="font-semibold text-[15px]">Riwayat Obrolan</span>
+                <button onClick={() => setSidebarOpen(false)} className="p-1.5 -mr-1.5 text-gray-500 active:bg-gray-100 rounded-full">
+                  <X size={18} />
                 </button>
               </div>
-              <div className="p-4">
+              <div className="p-3.5">
                 <button 
                   onClick={startNewChat}
-                  className="w-full flex items-center gap-2 bg-blue-600 text-white rounded-xl px-4 py-3 font-medium active:bg-blue-700 transition"
+                  className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white rounded-xl px-4 py-2.5 text-[13px] font-bold active:bg-blue-700 transition"
                 >
-                  <PlusCircle size={18} />
+                  <PlusCircle size={16} />
                   Mulai Obrolan Baru
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto px-2 pb-4">
                 {chats.length === 0 ? (
-                  <div className="p-4 text-center text-sm text-gray-400">Belum ada riwayat</div>
+                  <div className="p-4 text-center text-[13px] text-gray-400 font-medium">Belum ada riwayat</div>
                 ) : (
                   chats.map(chat => (
                     <button
                       key={chat.id}
                       onClick={() => selectChat(chat.id)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition ${chat.id === currentChatId ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50 text-gray-700'}`}
+                      className={`w-full flex items-center gap-2.5 p-2.5 rounded-xl text-left transition ${chat.id === currentChatId ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50 text-gray-700'}`}
                     >
-                      <MessageSquare size={16} className={chat.id === currentChatId ? 'text-blue-600' : 'text-gray-400'} />
-                      <span className="truncate text-[14px] flex-1">{chat.title || 'Obrolan'}</span>
+                      <MessageSquare size={14} className={chat.id === currentChatId ? 'text-blue-600' : 'text-gray-400'} />
+                      <span className="truncate text-[13px] font-medium flex-1">{chat.title || 'Obrolan'}</span>
                     </button>
                   ))
                 )}
@@ -233,28 +236,28 @@ export default function Page() {
 
       {/* MAIN CHAT AREA */}
       <div className="flex flex-col flex-1 w-full relative h-full">
-        <header className="flex items-center justify-between px-4 py-3 bg-white/90 backdrop-blur-md sticky top-0 z-10 border-b border-gray-50/50">
-          <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2 text-gray-700 active:bg-gray-100 transition-colors rounded-full">
-             <Menu size={24} strokeWidth={1.5} />
+        <header className="flex items-center justify-between px-3 py-2 bg-white/90 backdrop-blur-md sticky top-0 z-10 border-b border-gray-50/50">
+          <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-1.5 text-gray-700 active:bg-gray-100 transition-colors rounded-full">
+             <Menu size={20} strokeWidth={2} />
           </button>
-          <div className="flex flex-col items-center justify-center -mt-1 cursor-pointer">
-            <div className="flex items-center gap-1.5 text-[15px] font-bold text-gray-950 tracking-tight">
-              DeepSeek V4 Flash
-              <ChevronDown size={14} className="text-gray-500" strokeWidth={2.5} />
+          <div className="flex flex-col items-center justify-center cursor-pointer">
+            <div className="flex items-center gap-1.5 text-[14px] font-bold text-gray-950 tracking-tight">
+              OpenMind v1.0
+              <ChevronDown size={14} className="text-gray-500" strokeWidth={3} />
             </div>
           </div>
-          <button onClick={startNewChat} className="p-2 -mr-2 text-gray-700 active:bg-gray-100 transition-colors rounded-full">
-             <PlusCircle size={24} strokeWidth={1.5} />
+          <button onClick={startNewChat} className="p-2 -mr-1.5 text-gray-700 active:bg-gray-100 transition-colors rounded-full">
+             <PlusCircle size={20} strokeWidth={2} />
           </button>
         </header>
 
-        <main className="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-5 scroll-smooth">
+        <main className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4 scroll-smooth">
           
           {messages.length === 0 && !isGenerating && !streamReasoning && !streamAnswer && (
              <div className="flex-1 flex flex-col items-center justify-center text-center px-4 opacity-70">
                 <Sparkles size={40} className="text-gray-300 mb-4" />
                 <h2 className="text-lg font-bold text-gray-700">Apa yang bisa saya bantu?</h2>
-                <p className="text-[13px] text-gray-500 mt-2 font-medium">Model: DeepSeek V4 Flash</p>
+                <p className="text-[13px] text-gray-500 mt-2 font-medium">Model: OpenMind v1.0</p>
              </div>
           )}
 
@@ -269,14 +272,14 @@ export default function Page() {
                   {msg.reasoning && (
                     <div className="flex flex-col mb-1">
                       <button 
-                        onClick={() => setIsThinkingExpanded(!isThinkingExpanded)}
+                        onClick={() => toggleThinking(idx)}
                         className="flex items-center gap-1.5 text-[11px] text-gray-500 font-bold py-1 self-start rounded-lg hover:text-gray-800 transition-colors"
                       >
                         Tahap Berpikir Selesai
-                        {isThinkingExpanded ? <ChevronUp size={13} strokeWidth={3} /> : <ChevronDown size={13} strokeWidth={3} />}
+                        {!collapsedThinking[idx] ? <ChevronUp size={13} strokeWidth={3} /> : <ChevronDown size={13} strokeWidth={3} />}
                       </button>
                       
-                      {isThinkingExpanded && (
+                      {!collapsedThinking[idx] && (
                         <div className="border-l-[3px] border-gray-300 ml-1 pl-3 py-0.5 mt-0.5 leading-snug max-vh-40 overflow-y-auto w-full break-words text-[12px] text-gray-600 font-semibold whitespace-pre-wrap">
                             {msg.reasoning || ''}
                         </div>
@@ -299,8 +302,11 @@ export default function Page() {
             <div className="flex flex-col gap-0.5 max-w-full items-start w-full">
               {(!streamAnswer || streamReasoning) && (
                 <div className="flex flex-col w-full mb-1">
-                  <div className="flex items-center gap-1.5 text-[11px] text-gray-600 font-bold py-1 self-start rounded-lg">
-                    <Loader2 size={12} className="animate-spin text-blue-600" /> Sedang berpikir...
+                  <div className="flex items-center gap-2 text-[11px] text-gray-600 font-bold py-1 self-start rounded-lg">
+                    <div className="flex items-center justify-center p-1 bg-gradient-to-tr from-blue-500 to-indigo-500 rounded-full shadow-sm animate-pulse">
+                      <Sparkles size={10} className="text-white" />
+                    </div>
+                    Sedang berpikir...
                   </div>
                   
                   {streamReasoning && (
