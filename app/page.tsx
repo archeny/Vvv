@@ -35,6 +35,7 @@ export default function Page() {
   const loadChats = async (devId: string) => {
     try {
       const res = await fetch(`/api/chats?deviceId=${devId}`);
+      if (!res.ok) return;
       const data = await res.json();
       if (data.chats) setChats(data.chats);
     } catch (err) {
@@ -45,6 +46,7 @@ export default function Page() {
   const loadMessages = async (chatId: string) => {
     try {
       const res = await fetch(`/api/chats/${chatId}/messages`);
+      if (!res.ok) return;
       const data = await res.json();
       if (data.messages) {
         setMessages(data.messages);
@@ -70,7 +72,9 @@ export default function Page() {
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (typeof window !== 'undefined') {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   const handleSend = async () => {
@@ -101,6 +105,11 @@ export default function Page() {
         }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`Server returned ${response.status}: ${errorData}`);
+      }
+
       if (!response.body) throw new Error('No response body');
 
       const reader = response.body.getReader();
@@ -108,13 +117,16 @@ export default function Page() {
       let done = false;
       let finalReasoning = '';
       let finalAnswer = '';
+      let buffer = '';
 
       while (!done) {
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
         if (value) {
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split(/\n\n/);
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split(/\r?\n/);
+          buffer = lines.pop() || '';
+          
           for (const line of lines) {
             const clean = line.trim();
             if (clean.startsWith('data:')) {
@@ -151,8 +163,15 @@ export default function Page() {
       setStreamReasoning('');
       setStreamAnswer('');
 
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error('Fetch error:', err);
+      // Fallback display
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: `Maaf, terjadi kesalahan:\n\`\`\`\n${err.message}\n\`\`\``, reasoning: '' },
+      ]);
+      setStreamReasoning('');
+      setStreamAnswer('');
     } finally {
       setIsGenerating(false);
       setTimeout(scrollToBottom, 50);
@@ -261,7 +280,7 @@ export default function Page() {
                       {isThinkingExpanded && (
                         <div className="border-l-[3px] border-gray-200 ml-1.5 pl-4 py-1 mt-1 leading-relaxed max-vh-40 overflow-y-auto w-full break-words prose prose-sm prose-gray max-w-none text-gray-500 marker:text-gray-400">
                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                              {msg.reasoning}
+                              {msg.reasoning || ''}
                            </ReactMarkdown>
                         </div>
                       )}
@@ -271,7 +290,7 @@ export default function Page() {
                   <div className="text-[15px] leading-relaxed text-gray-800 pt-2 break-words prose prose-p:leading-relaxed prose-gray max-w-none prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-table:border-collapse prose-th:border prose-th:border-gray-300 prose-th:p-2 prose-td:border prose-td:border-gray-300 prose-td:p-2">
                     <div>
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                       {msg.content}
+                       {msg.content || ''}
                     </ReactMarkdown>
                     </div>
                   </div>
@@ -292,7 +311,7 @@ export default function Page() {
                   {streamReasoning && (
                     <div className="border-l-[3px] border-gray-200 ml-1.5 pl-4 py-1 mt-1 leading-relaxed w-full break-words prose prose-sm prose-gray max-w-none text-gray-500 marker:text-gray-400">
                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {streamReasoning}
+                          {streamReasoning || ''}
                        </ReactMarkdown>
                     </div>
                   )}
@@ -302,7 +321,7 @@ export default function Page() {
                  <div className="text-[15px] leading-relaxed text-gray-800 pt-2 break-words prose prose-p:leading-relaxed prose-gray max-w-none prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-table:border-collapse prose-th:border prose-th:border-gray-300 prose-th:p-2 prose-td:border prose-td:border-gray-300 prose-td:p-2">
                     <div>
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                       {streamAnswer}
+                       {streamAnswer || ''}
                     </ReactMarkdown>
                     </div>
                  </div>

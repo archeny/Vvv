@@ -1,7 +1,7 @@
 // by Stenly
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'node:crypto';
-import { pool } from '@/lib/db';
+import { pool, syncDb } from '@/lib/db';
 import axios from 'axios';
 
 const BASE = 'https://notegpt.io';
@@ -38,6 +38,8 @@ function makeCookieHeader() {
 
 export async function POST(req: NextRequest) {
   try {
+    await syncDb(); // Ensure DB schemas are fully ready
+
     const body = await req.json();
     const { deviceId, chatId, prompt, history = [] } = body;
 
@@ -92,78 +94,75 @@ export async function POST(req: NextRequest) {
 
     const stream = new ReadableStream({
       async start(controller) {
-        let answer = '';
-        let reasoning = '';
-
         try {
-          const res = await axios.post(
-            `${BASE}/api/v2/chat/stream`,
-            JSON.stringify(payload),
-            {
-              timeout: 60000,
-              responseType: "stream",
-              validateStatus: () => true,
-              headers: {
-                "sec-ch-ua-platform": `"Android"`,
-                "User-Agent": ua,
-                "sec-ch-ua": `"Google Chrome";v="147", "Not.A/Brand";v="8", "Chromium";v="147"`,
-                "Content-Type": "application/json",
-                "sec-ch-ua-mobile": "?1",
-                Accept: "*/*",
-                Origin: BASE,
-                "sec-fetch-site": "same-origin",
-                "sec-fetch-mode": "cors",
-                "sec-fetch-dest": "empty",
-                Referer: `${BASE}/chat-deepseek`,
-                "Accept-Encoding": "gzip, deflate, br, zstd",
-                "Accept-Language": "id-ID,id;q=0.9",
-                Cookie: cookieHeader,
-                priority: "u=1, i",
-              },
-            }
-          );
-
-          res.data.setEncoding("utf8");
+          const res = await axios.post(`${BASE}/api/v2/chat/stream`, payload, {
+            timeout: 60000,
+            responseType: "stream",
+            validateStatus: () => true,
+            headers: {
+              "sec-ch-ua-platform": `"Android"`,
+              "User-Agent": ua,
+              "sec-ch-ua": `"Google Chrome";v="147", "Not.A/Brand";v="8", "Chromium";v="147"`,
+              "Content-Type": "application/json",
+              "sec-ch-ua-mobile": "?1",
+              Accept: "*/*",
+              Origin: BASE,
+              "sec-fetch-site": "same-origin",
+              "sec-fetch-mode": "cors",
+              "sec-fetch-dest": "empty",
+              Referer: `${BASE}/chat-deepseek`,
+              "Accept-Encoding": "gzip, deflate, br, zstd",
+              "Accept-Language": "id-ID,id;q=0.9",
+              Cookie: cookieHeader,
+              priority: "u=1, i",
+            },
+          });
 
           // Send conversation details upfront
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ chatId: finalChatId })}\n\n`));
 
-          res.data.on("data", (chunk: string) => {
-            const lines = chunk.split(/\r?\n/);
-            for (const line of lines) {
-              const clean = line.trim();
-              if (!clean.startsWith("data:")) continue;
+          let rawBody = '';
+          res.data.setEncoding('utf8');
 
-              const raw = clean.replace(/^data:\s*/, "").trim();
-              if (!raw || raw === "[DONE]") continue;
-
-              try {
-                const json = JSON.parse(raw);
-                if (json.reasoning || json.text) {
-                  controller.enqueue(encoder.encode(`data: ${raw}\n\n`));
-                }
-                if (json.reasoning) reasoning += json.reasoning;
-                if (json.text) answer += json.text;
-                if (json.done) {
-                  const assistantMessageId = uuid();
-                  pool.execute('INSERT INTO messages (id, chat_id, role, content, reasoning) VALUES (?, ?, ?, ?, ?)', [
-                      assistantMessageId, finalChatId, 'assistant', answer, reasoning
-                  ]).catch(console.error);
-                }
-              } catch {}
-            }
+          res.data.on('data', (chunk: string) => {
+             rawBody += chunk;
+             controller.enqueue(encoder.encode(chunk));
           });
 
-          res.data.on("end", () => {
+          res.data.on('end', async () => {
+             let answer = '';
+             let reasoning = '';
+             const lines = rawBody.split(/\\r?\\n/);
+             for (const line of lines) {
+                const clean = line.trim();
+                if (clean.startsWith('data:')) {
+                   const raw = clean.replace(/^data:\\s*/, '').trim();
+                   if (raw === '[DONE]') continue;
+                   try {
+                      const json = JSON.parse(raw);
+                      if (json.reasoning) reasoning += json.reasoning;
+                      if (json.text) answer += json.text;
+                   } catch (e) {}
+                }
+             }
+
+             if (answer || reasoning) {
+                const assistantMessageId = uuid();
+                await pool.execute(
+                    'INSERT INTO messages (id, chat_id, role, content, reasoning) VALUES (?, ?, ?, ?, ?)',
+                    [assistantMessageId, finalChatId, 'assistant', answer, reasoning]
+                ).catch((err) => console.error("Final insert error:", err));
+             }
+
              controller.close();
           });
 
-          res.data.on("error", (error: any) => {
-             console.error("Stream error:", error);
-             controller.error(error);
+          res.data.on('error', (err: any) => {
+             console.error('Stream error:', err);
+             controller.error(err);
           });
-        } catch (error) {
-           console.error("Axios setup error:", error);
+        } catch (error: any) {
+           console.error("Fetch setup error:", error);
            controller.error(error);
         }
       }
@@ -178,6 +177,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error: any) {
+    console.error("Route Catch:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -9,8 +9,7 @@
   "functions": {
     "app/api/**/route.ts": {
       "memory": 1024,
-      "maxDuration": 60,
-      "runtime": "nodejs22.x"
+      "maxDuration": 60
     }
   }
 }

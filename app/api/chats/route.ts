@@ -1,6 +1,6 @@
 // by Stenly
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { pool, syncDb } from '@/lib/db';
 import crypto from 'node:crypto';
 
 export async function GET(req: NextRequest) {
@@ -8,6 +8,7 @@ export async function GET(req: NextRequest) {
   if (!deviceId) return NextResponse.json({ error: 'Missing deviceId' }, { status: 400 });
 
   try {
+    await syncDb();
     const [users]: any = await pool.execute('SELECT id FROM users WHERE device_id = ?', [deviceId]);
     if (users.length === 0) {
       return NextResponse.json({ chats: [] });

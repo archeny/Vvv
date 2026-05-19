@@ -1,6 +1,6 @@
 // by Stenly
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { pool, syncDb } from '@/lib/db';
 
 export async function GET(
   req: NextRequest,
@@ -11,6 +11,7 @@ export async function GET(
   if (!id) return NextResponse.json({ error: 'Missing chat id' }, { status: 400 });
 
   try {
+    await syncDb();
     const [messages]: any = await pool.execute(
       'SELECT id, role, content, reasoning, created_at FROM messages WHERE chat_id = ? ORDER BY created_at ASC',
       [id]
