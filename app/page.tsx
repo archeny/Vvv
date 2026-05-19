@@ -261,35 +261,33 @@ export default function Page() {
           {messages.map((msg, idx) => (
             <div key={idx} className={`flex flex-col max-w-full ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
               {msg.role === 'user' ? (
-                <div className="bg-[#f0f0f4] rounded-tl-[20px] rounded-bl-[20px] rounded-br-[20px] rounded-tr-[4px] px-4 py-2.5 text-[14px] text-gray-950 font-medium leading-relaxed max-w-[85%] break-words shadow-sm border border-gray-100/50">
+                <div className="bg-[#f0f0f4] rounded-tl-[20px] rounded-bl-[20px] rounded-br-[20px] rounded-tr-[4px] px-4 py-2.5 text-[13px] text-slate-900 font-bold leading-snug max-w-[85%] break-words shadow-sm border border-gray-100/50">
                   {msg.content}
                 </div>
               ) : (
-                <div className="flex flex-col gap-1 max-w-full w-full">
+                <div className="flex flex-col gap-0.5 max-w-full w-full">
                   {msg.reasoning && (
-                    <div className="flex flex-col">
+                    <div className="flex flex-col mb-1">
                       <button 
                         onClick={() => setIsThinkingExpanded(!isThinkingExpanded)}
-                        className="flex items-center gap-2 text-[12px] text-gray-500 font-bold py-1 self-start rounded-lg hover:text-gray-800 transition-colors"
+                        className="flex items-center gap-1.5 text-[11px] text-gray-500 font-bold py-1 self-start rounded-lg hover:text-gray-800 transition-colors"
                       >
                         Tahap Berpikir Selesai
-                        {isThinkingExpanded ? <ChevronUp size={14} strokeWidth={2.5} /> : <ChevronDown size={14} strokeWidth={2.5} />}
+                        {isThinkingExpanded ? <ChevronUp size={13} strokeWidth={3} /> : <ChevronDown size={13} strokeWidth={3} />}
                       </button>
                       
                       {isThinkingExpanded && (
-                        <div className="border-l-[3px] border-gray-200 ml-1 pl-3 py-0.5 mt-0.5 leading-relaxed max-vh-40 overflow-y-auto w-full break-words text-[13.5px] text-gray-500 font-medium whitespace-pre-wrap">
+                        <div className="border-l-[3px] border-gray-300 ml-1 pl-3 py-0.5 mt-0.5 leading-snug max-vh-40 overflow-y-auto w-full break-words text-[12px] text-gray-600 font-semibold whitespace-pre-wrap">
                             {msg.reasoning || ''}
                         </div>
                       )}
                     </div>
                   )}
 
-                  <div className="text-[14px] font-medium leading-relaxed text-gray-950 pt-1 break-words prose prose-sm prose-p:leading-relaxed prose-gray max-w-none prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-table:border-collapse prose-th:border prose-th:border-gray-300 prose-th:p-2 prose-td:border prose-td:border-gray-300 prose-td:p-2">
-                    <div>
+                  <div className="text-[13px] font-semibold leading-snug text-slate-900 break-words prose prose-sm prose-p:leading-snug prose-p:text-slate-900 prose-p:font-semibold prose-p:my-1.5 prose-headings:font-bold prose-headings:text-slate-900 prose-li:font-semibold prose-li:text-slate-900 prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-table:border-collapse prose-th:border prose-th:border-gray-300 prose-th:p-1.5 prose-td:border prose-td:border-gray-300 prose-td:p-1.5 prose-pre:bg-gray-900 prose-pre:text-gray-100 max-w-none">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                        {msg.content || ''}
                     </ReactMarkdown>
-                    </div>
                   </div>
                 </div>
               )}
@@ -298,27 +296,25 @@ export default function Page() {
 
           {/* STREAMING UI */}
           {(streamReasoning || streamAnswer || (isGenerating && !streamReasoning && !streamAnswer)) && (
-            <div className="flex flex-col gap-1 max-w-full items-start w-full">
+            <div className="flex flex-col gap-0.5 max-w-full items-start w-full">
               {(!streamAnswer || streamReasoning) && (
-                <div className="flex flex-col w-full">
-                  <div className="flex items-center gap-1.5 text-[12px] text-gray-600 font-bold py-1 self-start rounded-lg">
+                <div className="flex flex-col w-full mb-1">
+                  <div className="flex items-center gap-1.5 text-[11px] text-gray-600 font-bold py-1 self-start rounded-lg">
                     <Loader2 size={12} className="animate-spin text-blue-600" /> Sedang berpikir...
                   </div>
                   
                   {streamReasoning && (
-                    <div className="border-l-[3px] border-gray-200 ml-1 pl-3 py-0.5 mt-0.5 leading-relaxed w-full break-words text-[13.5px] text-gray-500 font-medium whitespace-pre-wrap">
+                    <div className="border-l-[3px] border-gray-300 ml-1 pl-3 py-0.5 mt-0.5 leading-snug w-full break-words text-[12px] text-gray-600 font-semibold whitespace-pre-wrap">
                         {streamReasoning || ''}
                     </div>
                   )}
                 </div>
               )}
               {streamAnswer && (
-                 <div className="text-[14px] font-medium leading-relaxed text-gray-950 pt-1 break-words prose prose-sm prose-p:leading-relaxed prose-gray max-w-none prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-table:border-collapse prose-th:border prose-th:border-gray-300 prose-th:p-2 prose-td:border prose-td:border-gray-300 prose-td:p-2">
-                    <div>
+                 <div className="text-[13px] font-semibold leading-snug text-slate-900 break-words prose prose-sm prose-p:leading-snug prose-p:text-slate-900 prose-p:font-semibold prose-p:my-1.5 prose-headings:font-bold prose-headings:text-slate-900 prose-li:font-semibold prose-li:text-slate-900 prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-table:border-collapse prose-th:border prose-th:border-gray-300 prose-th:p-1.5 prose-td:border prose-td:border-gray-300 prose-td:p-1.5 prose-pre:bg-gray-900 prose-pre:text-gray-100 max-w-none">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                        {streamAnswer || ''}
                     </ReactMarkdown>
-                    </div>
                  </div>
               )}
             </div>
