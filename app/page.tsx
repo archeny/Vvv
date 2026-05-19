@@ -4,6 +4,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Menu, PlusCircle, ChevronDown, ChevronUp, Globe, Sparkles, Mic, Send, X, MessageSquare, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function Page() {
   const [deviceId, setDeviceId] = useState<string>('');
@@ -85,7 +87,7 @@ export default function Page() {
     const newMessages = [...messages, { role: 'user', content: userText }];
     setMessages(newMessages);
     
-    setTimeout(scrollToBottom, 100);
+    setTimeout(scrollToBottom, 50);
 
     try {
       const response = await fetch('/api/chat', {
@@ -153,18 +155,8 @@ export default function Page() {
       console.error(err);
     } finally {
       setIsGenerating(false);
-      setTimeout(scrollToBottom, 100);
+      setTimeout(scrollToBottom, 50);
     }
-  };
-
-  const formatText = (text: string) => {
-    if (!text) return null;
-    return text.split('\n').map((line, i) => (
-      <span key={i}>
-        {line}
-        <br />
-      </span>
-    ));
   };
 
   return (
@@ -227,10 +219,10 @@ export default function Page() {
              <Menu size={24} strokeWidth={1.5} />
           </button>
           <div className="flex flex-col items-center justify-center -mt-1">
-            <h1 className="text-[15px] font-semibold text-gray-900">Sapaan ramah dan tawaran bantuan</h1>
-            <div className="flex items-center gap-1 text-[11px] text-blue-600 font-semibold tracking-wide uppercase mt-0.5">
-              <Sparkles size={10} className="fill-blue-600/50" />
-              Pakar
+            <h1 className="text-[15px] font-semibold text-gray-900 tracking-tight">Sapaan ramah dan tawaran bantuan</h1>
+            <div className="flex items-center gap-1 text-[11px] text-blue-600 font-bold tracking-widest uppercase mt-0.5">
+              <Sparkles size={11} className="fill-blue-600/50" />
+              PAKAR
             </div>
           </div>
           <button onClick={startNewChat} className="p-2 -mr-2 text-gray-700 active:bg-gray-100 transition-colors rounded-full">
@@ -241,9 +233,9 @@ export default function Page() {
         <main className="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-6 scroll-smooth">
           
           {messages.length === 0 && !isGenerating && !streamReasoning && !streamAnswer && (
-             <div className="flex-1 flex flex-col items-center justify-center text-center px-4 opacity-50">
+             <div className="flex-1 flex flex-col items-center justify-center text-center px-4 opacity-70">
                 <Sparkles size={40} className="text-gray-300 mb-4" />
-                <h2 className="text-xl font-medium text-gray-500">Tanyakan sesuatu</h2>
+                <h2 className="text-xl font-medium text-gray-600">Apa yang bisa saya bantu?</h2>
                 <p className="text-sm text-gray-400 mt-2">Diberdayakan oleh DeepSeek V4 Flash</p>
              </div>
           )}
@@ -251,7 +243,7 @@ export default function Page() {
           {messages.map((msg, idx) => (
             <div key={idx} className={`flex flex-col max-w-full ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
               {msg.role === 'user' ? (
-                <div className="bg-blue-50/50 sm:bg-gray-100/70 bg-[#f2f2f5] rounded-3xl rounded-tr-[4px] px-4 py-3 text-[15px] text-gray-800 leading-relaxed max-w-[85%] whitespace-pre-wrap break-words">
+                <div className="bg-[#f2f2f5] rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[4px] px-5 py-3 text-[15px] text-gray-800 leading-relaxed max-w-[85%] break-words">
                   {msg.content}
                 </div>
               ) : (
@@ -267,15 +259,21 @@ export default function Page() {
                       </button>
                       
                       {isThinkingExpanded && (
-                        <div className="border-l-[3px] border-gray-200 ml-1.5 pl-4 py-1 mt-1 text-gray-500 text-[14px] leading-relaxed max-h-40 overflow-y-auto w-full break-words">
-                          {formatText(msg.reasoning)}
+                        <div className="border-l-[3px] border-gray-200 ml-1.5 pl-4 py-1 mt-1 leading-relaxed max-vh-40 overflow-y-auto w-full break-words prose prose-sm prose-gray max-w-none text-gray-500 marker:text-gray-400">
+                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {msg.reasoning}
+                           </ReactMarkdown>
                         </div>
                       )}
                     </div>
                   )}
 
-                  <div className="text-[15px] leading-relaxed text-gray-800 pt-2 break-words whitespace-pre-wrap">
-                    {msg.content ? formatText(msg.content) : null}
+                  <div className="text-[15px] leading-relaxed text-gray-800 pt-2 break-words prose prose-p:leading-relaxed prose-gray max-w-none prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-table:border-collapse prose-th:border prose-th:border-gray-300 prose-th:p-2 prose-td:border prose-td:border-gray-300 prose-td:p-2">
+                    <div>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                       {msg.content}
+                    </ReactMarkdown>
+                    </div>
                   </div>
                 </div>
               )}
@@ -292,21 +290,27 @@ export default function Page() {
                   </div>
                   
                   {streamReasoning && (
-                    <div className="border-l-[3px] border-gray-200 ml-1.5 pl-4 py-1 mt-1 text-gray-500 text-[14px] leading-relaxed w-full break-words">
-                       {formatText(streamReasoning)}
+                    <div className="border-l-[3px] border-gray-200 ml-1.5 pl-4 py-1 mt-1 leading-relaxed w-full break-words prose prose-sm prose-gray max-w-none text-gray-500 marker:text-gray-400">
+                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {streamReasoning}
+                       </ReactMarkdown>
                     </div>
                   )}
                 </div>
               )}
               {streamAnswer && (
-                 <div className="text-[15px] leading-relaxed text-gray-800 pt-2 break-words whitespace-pre-wrap">
-                   {formatText(streamAnswer)}
+                 <div className="text-[15px] leading-relaxed text-gray-800 pt-2 break-words prose prose-p:leading-relaxed prose-gray max-w-none prose-a:text-blue-600 hover:prose-a:text-blue-500 prose-table:border-collapse prose-th:border prose-th:border-gray-300 prose-th:p-2 prose-td:border prose-td:border-gray-300 prose-td:p-2">
+                    <div>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                       {streamAnswer}
+                    </ReactMarkdown>
+                    </div>
                  </div>
               )}
             </div>
           )}
           
-          <div ref={messagesEndRef} className="h-2" />
+          <div ref={messagesEndRef} className="h-4" />
         </main>
 
         <div className="px-4 pb-5 pt-2 bg-gradient-to-t from-white via-white to-transparent sticky bottom-0">
