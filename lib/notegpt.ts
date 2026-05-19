@@ -48,7 +48,7 @@ export function toHistoryMessages(history: any[]) {
   ]);
 }
 
-export async function DeepSeekThinkingStream(prompt: string, history: any[] = [], conversation_id: string, onSave: (answer: string, reasoning: string) => void) {
+export async function DeepSeekThinkingStream(prompt: string, history: any[] = [], conversation_id: string, onSave: (answer: string, reasoning: string, thinkingTime: number | null) => void) {
   const cookieHeader = makeCookieHeader();
 
   const payload = {
@@ -99,10 +99,15 @@ export async function DeepSeekThinkingStream(prompt: string, history: any[] = []
       }
       
       let rawBody = '';
+      const startTime = Date.now();
+      let firstTextTime = 0;
 
       res.data.on('data', (chunk: string | Buffer) => {
         const text = typeof chunk === 'string' ? chunk : chunk.toString('utf8');
         rawBody += text;
+        if (firstTextTime === 0 && text.includes('"text"')) {
+           firstTextTime = Date.now();
+        }
         controller.enqueue(encoder.encode(text));
       });
 
@@ -124,7 +129,8 @@ export async function DeepSeekThinkingStream(prompt: string, history: any[] = []
            } catch (e) {}
          }
          
-         onSave(answer, reasoning);
+         const thinkingTime = firstTextTime > 0 ? Math.round((firstTextTime - startTime) / 1000) : null;
+         onSave(answer, reasoning, thinkingTime);
          controller.close();
       });
 

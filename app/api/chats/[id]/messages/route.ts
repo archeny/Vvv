@@ -13,7 +13,7 @@ export async function GET(
   try {
     await syncDb();
     const [messages]: any = await pool.execute(
-      'SELECT id, role, content, reasoning, created_at FROM messages WHERE chat_id = ? ORDER BY created_at ASC',
+      'SELECT id, role, content, reasoning, thinking_time, created_at FROM messages WHERE chat_id = ? ORDER BY created_at ASC',
       [id]
     );
 

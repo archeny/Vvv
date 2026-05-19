@@ -35,7 +35,15 @@ export async function syncDb() {
     await pool.execute("SELECT reasoning FROM messages LIMIT 1");
   } catch (e: any) {
     if (e.code === 'ER_BAD_FIELD_ERROR' || e.message.includes('Unknown column')) {
-      try { await pool.execute("ALTER TABLE messages ADD COLUMN reasoning TEXT"); } catch(err){}
+      try { await pool.execute("ALTER TABLE messages ADD COLUMN reasoning LONGTEXT"); } catch(err){}
+    }
+  }
+
+  try {
+    await pool.execute("SELECT thinking_time FROM messages LIMIT 1");
+  } catch (e: any) {
+    if (e.code === 'ER_BAD_FIELD_ERROR' || e.message.includes('Unknown column')) {
+      try { await pool.execute("ALTER TABLE messages ADD COLUMN thinking_time INT"); } catch(err){}
     }
   }
 }

@@ -55,12 +55,12 @@ export async function POST(req: NextRequest) {
     }, []);
 
     const conversationId = uuid();
-    const stream = await DeepSeekThinkingStream(prompt, finalHistory, conversationId, async (answer, reasoning) => {
+    const stream = await DeepSeekThinkingStream(prompt, finalHistory, conversationId, async (answer, reasoning, thinkingTime) => {
         if (answer || reasoning) {
           const assistantMessageId = uuid();
           await pool.execute(
-            'INSERT INTO messages (id, chat_id, role, content, reasoning) VALUES (?, ?, ?, ?, ?)',
-            [assistantMessageId, finalChatId, 'assistant', answer, reasoning]
+            'INSERT INTO messages (id, chat_id, role, content, reasoning, thinking_time) VALUES (?, ?, ?, ?, ?, ?)',
+            [assistantMessageId, finalChatId, 'assistant', answer, reasoning, thinkingTime]
           ).catch((err) => console.error("Final insert error:", err));
         }
     });

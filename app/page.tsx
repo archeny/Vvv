@@ -20,6 +20,7 @@ export default function Page() {
   // To track the current streaming reasoning & answer
   const [streamReasoning, setStreamReasoning] = useState('');
   const [streamAnswer, setStreamAnswer] = useState('');
+  const [streamThinkingTime, setStreamThinkingTime] = useState<number | null>(null);
   const [collapsedThinking, setCollapsedThinking] = useState<Record<number, boolean>>({});
 
   const toggleThinking = (idx: number) => {
@@ -89,6 +90,10 @@ export default function Page() {
     setIsGenerating(true);
     setStreamReasoning('');
     setStreamAnswer('');
+    setStreamThinkingTime(null);
+    const thinkStart = Date.now();
+    let hasCountedThinkTime = false;
+    let localFinalThinkingTime: number | null = null;
 
     // Save history formatting
     const newMessages = [...messages, { role: 'user', content: userText }];
@@ -147,6 +152,11 @@ export default function Page() {
                   scrollToBottom();
                 }
                 if (json.text) {
+                  if (!hasCountedThinkTime && finalReasoning) {
+                    hasCountedThinkTime = true;
+                    localFinalThinkingTime = Math.round((Date.now() - thinkStart) / 1000);
+                    setStreamThinkingTime(localFinalThinkingTime);
+                  }
                   finalAnswer += json.text;
                   setStreamAnswer(finalAnswer);
                   scrollToBottom();
@@ -159,10 +169,9 @@ export default function Page() {
         }
       }
 
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: finalAnswer, reasoning: finalReasoning },
-      ]);
+      const finalMessage = { role: 'assistant', content: finalAnswer, reasoning: finalReasoning, thinking_time: localFinalThinkingTime || undefined };
+
+      setMessages((prev) => [...prev, finalMessage]);
       setStreamReasoning('');
       setStreamAnswer('');
 
@@ -273,9 +282,12 @@ export default function Page() {
                     <div className="flex flex-col mb-1">
                       <button 
                         onClick={() => toggleThinking(idx)}
-                        className="flex items-center gap-1.5 text-[11px] text-gray-500 font-bold py-1 self-start rounded-lg hover:text-gray-800 transition-colors"
+                        className="flex items-center gap-2 text-[11px] text-gray-500 font-bold py-1 self-start rounded-lg hover:text-gray-800 transition-colors"
                       >
-                        Tahap Berpikir Selesai
+                         <div className="flex items-center justify-center p-1 bg-gray-100 rounded-full shadow-sm">
+                           <Sparkles size={10} className="text-gray-400" />
+                         </div>
+                        Berpikir selesai {msg.thinking_time ? `(${msg.thinking_time} detik)` : ''}
                         {!collapsedThinking[idx] ? <ChevronUp size={13} strokeWidth={3} /> : <ChevronDown size={13} strokeWidth={3} />}
                       </button>
                       
@@ -303,13 +315,24 @@ export default function Page() {
               {(!streamAnswer || streamReasoning) && (
                 <div className="flex flex-col w-full mb-1">
                   <div className="flex items-center gap-2 text-[11px] text-gray-600 font-bold py-1 self-start rounded-lg">
-                    <div className="flex items-center justify-center p-1 bg-gradient-to-tr from-blue-500 to-indigo-500 rounded-full shadow-sm animate-pulse">
-                      <Sparkles size={10} className="text-white" />
-                    </div>
-                    Sedang berpikir...
+                    {!streamThinkingTime ? (
+                      <>
+                        <div className="flex items-center justify-center p-1 bg-gradient-to-tr from-blue-500 to-indigo-500 rounded-full shadow-sm animate-pulse">
+                          <Sparkles size={10} className="text-white" />
+                        </div>
+                        Sedang berpikir...
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-center p-1 bg-gray-100 rounded-full shadow-sm">
+                          <Sparkles size={10} className="text-gray-400" />
+                        </div>
+                        Berpikir selesai ({streamThinkingTime} detik)
+                      </>
+                    )}
                   </div>
                   
-                  {streamReasoning && (
+                  {streamReasoning && !streamThinkingTime && (
                     <div className="border-l-[3px] border-gray-300 ml-1 pl-3 py-0.5 mt-0.5 leading-snug w-full break-words text-[12px] text-gray-600 font-semibold whitespace-pre-wrap">
                         {streamReasoning || ''}
                     </div>
