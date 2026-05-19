@@ -69,6 +69,9 @@ export async function POST(req: NextRequest) {
     const finalStream = stream.pipeThrough(new TransformStream({
       start(controller) {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ chatId: finalChatId })}\n\n`));
+      },
+      transform(chunk, controller) {
+        controller.enqueue(chunk);
       }
     }));
 
